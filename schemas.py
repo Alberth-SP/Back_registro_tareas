@@ -24,3 +24,6 @@ class Tarea(TareaBase):
     tipo : Tipo
     class Config:
         orm_mode = True
+
+class EstadoTarea(BaseModel):
+    estado: str

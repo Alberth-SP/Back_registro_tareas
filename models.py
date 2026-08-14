@@ -11,6 +11,7 @@ class Tarea(Base):
     description = Column(Text)
     is_active = Column(Boolean, default=True)
     prioridad = Column(Text)
+    estado = Column(Text, default="pendiente")
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
     foreig_id = Column(Integer, ForeignKey("tipo.id"))
     
