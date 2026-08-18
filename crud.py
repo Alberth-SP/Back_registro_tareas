@@ -95,13 +95,13 @@ def update_estado(db: Session, tarea_id: int, estado: schemas.EstadoTarea):
         db_tarea.estado = estado
         db.commit()
         db.refresh(db_tarea)
-        return "exito"
+        return True
     if db_tarea.estado == "en proceso" and estado == "finalizado":
         print("5555555555555")
         db_tarea.estado = estado
         db.commit()
         db.refresh(db_tarea)
-        return "exito"
+        return True
     else:
-        return "errorrrr!!!!"
+        return False
     

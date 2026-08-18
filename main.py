@@ -91,8 +91,6 @@ def delete_tarea(tarea_id: int, db:Session=Depends(get_db)):
 @app.put("/tarea/{tarea_id}/estad")
 def cambiar_estado(tarea_id: int, estado: schemas.EstadoTarea, db:Session=Depends(get_db)):
     db_tarea = crud.update_estado(db, tarea_id = tarea_id, estado = estado.estado)
-    print("111111111111111")
-    print(db_tarea)
     if db_tarea is None:
         raise HTTPException(status_code=404, detail="Tarea not found")
     return db_tarea
