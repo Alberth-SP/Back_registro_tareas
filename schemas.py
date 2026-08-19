@@ -16,8 +16,11 @@ class TareaBase(BaseModel):
     description: Optional[str] = None
     foreig_id : int
     prioridad : str
+
+class EstadoTarea(BaseModel):
+    estado: str
     
-class Tarea(TareaBase):
+class Tarea(TareaBase, EstadoTarea):
     id: int
     is_active: bool
     fecha_creacion: datetime

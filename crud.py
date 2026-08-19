@@ -82,3 +82,26 @@ def delete_tarea(db: Session, tarea_id: int):
     db_tarea.is_active = False
     db.commit()
     return True
+
+# Estado
+
+def update_estado(db: Session, tarea_id: int, estado: schemas.EstadoTarea):
+    db_tarea = db.query(models.Tarea).filter(models.Tarea.id == tarea_id, models.Tarea.is_active == True).first()
+    print(db_tarea)
+    if db_tarea is None:
+        return None
+    if db_tarea.estado == "pendiente" and estado == "en proceso":
+        print("44444444444")
+        db_tarea.estado = estado
+        db.commit()
+        db.refresh(db_tarea)
+        return True
+    if db_tarea.estado == "en proceso" and estado == "finalizado":
+        print("5555555555555")
+        db_tarea.estado = estado
+        db.commit()
+        db.refresh(db_tarea)
+        return True
+    else:
+        return False
+    
