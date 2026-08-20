@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
+from io import BytesIO
+import xlsxwriter
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 
 # Crear las tablas en la base de datos
 models.Base.metadata.create_all(bind = engine)
@@ -95,3 +99,65 @@ def cambiar_estado(tarea_id: int, estado: schemas.EstadoTarea, db:Session=Depend
         raise HTTPException(status_code=404, detail="Tarea not found")
     return db_tarea
 
+@app.get("/exportar-excel")
+def exportar_excel(db: Session = Depends(get_db)):
+    tareas = crud.get_tareas(db, skip=0, limit=100)
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+    worksheet = workbook.add_worksheet("Tareas")
+    
+    header = workbook.add_format({
+        "bold": True,
+        "bg_color": "#4472C4",
+        "font_color": "white",
+        "border": 1
+    })
+    # Cabeceras
+    worksheet.write("A1", "N", header)
+    worksheet.write("B1", "Descripcion", header)
+    worksheet.write("C1", "Tipo de Actividad", header)
+    worksheet.write("D1", "Prioridad", header)
+    worksheet.write("E1", "Estado", header)
+    worksheet.write("F1", "Fecha de Creacion", header)
+    
+    
+    date_format = workbook.add_format({'num_format': 'dd/mm/yyyy hh:mm'})
+    # Registros
+    
+    for fila, tarea in enumerate(tareas, start=1):
+        worksheet.write(fila, 0, fila)
+        worksheet.write(fila, 1, tarea.description)
+        worksheet.write(fila, 2, tarea.tipo.nombre)
+        worksheet.write(fila, 3, tarea.prioridad)
+        worksheet.write(fila, 4, tarea.estado)
+        worksheet.write_datetime(
+        fila,
+        5,
+        tarea.fecha_creacion,
+        date_format
+        )
+        print("****************tareas*************")
+        print(type(tarea.fecha_creacion))
+        print("****************tareas*************")
+    
+    worksheet.set_column("A:A", 10)
+    worksheet.set_column("B:B", 50)
+    worksheet.set_column("C:C", 20)
+    worksheet.set_column("D:D", 10)
+    worksheet.set_column("E:E", 10)
+    worksheet.set_column("F:F", 20)   
+        
+    workbook.close()
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": "attachment; filename=tareas.xlsx"
+        }
+    )
+    
+
+    
