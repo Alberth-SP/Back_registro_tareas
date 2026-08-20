@@ -64,7 +64,7 @@ def create_tarea(tarea: schemas.TareaBase, db: Session = Depends(get_db)):
     return crud.create_tarea(db=db, tarea=tarea)
 
 @app.get("/tarea/", response_model=list[schemas.Tarea])
-def read_tarea(skip: int=0, limit:int=100, db: Session= Depends(get_db)):
+def read_tarea(skip: int=0, limit: int | None = None, db: Session= Depends(get_db)):
     tareas = crud.get_tareas(db, skip=skip, limit=limit)
     return tareas
 
@@ -101,7 +101,7 @@ def cambiar_estado(tarea_id: int, estado: schemas.EstadoTarea, db:Session=Depend
 
 @app.get("/exportar-excel")
 def exportar_excel(db: Session = Depends(get_db)):
-    tareas = crud.get_tareas(db, skip=0, limit=100)
+    tareas = crud.get_tareas(db, skip=0, limit = None)
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet("Tareas")
@@ -110,35 +110,81 @@ def exportar_excel(db: Session = Depends(get_db)):
         "bold": True,
         "bg_color": "#4472C4",
         "font_color": "white",
-        "border": 1
+        "border": 4,
+        "align": "center",
+        "border_color": "#D9E1F2"
     })
+    
+    # Celdas normales
+    cell_format_1 = workbook.add_format({
+        "border": 1,
+        "border_color": "#000000",
+        "valign": "vcenter"
+    })
+    
+    cell_format_2 = workbook.add_format({
+        "border": 1,
+        "border_color": "#000000",
+        "bg_color": "#D3D3D3",
+        "valign": "vcenter"
+    })
+    
+    title_format = workbook.add_format({
+        "bold": True,
+        "font_size": 18,
+        "font_color": "black",
+        "bg_color": "white",
+        "align": "center",
+        "valign": "vcenter"
+    })
+    
     # Cabeceras
-    worksheet.write("A1", "N", header)
-    worksheet.write("B1", "Descripcion", header)
-    worksheet.write("C1", "Tipo de Actividad", header)
-    worksheet.write("D1", "Prioridad", header)
-    worksheet.write("E1", "Estado", header)
-    worksheet.write("F1", "Fecha de Creacion", header)
+    worksheet.merge_range("A3:F3", "REPORTE DE TAREAS", title_format)
+    worksheet.write("A5", "N", header)
+    worksheet.write("B5", "Descripcion", header)
+    worksheet.write("C5", "Tipo de Actividad", header)
+    worksheet.write("D5", "Prioridad", header)
+    worksheet.write("E5", "Estado", header)
+    worksheet.write("F5", "Fecha de Creacion", header)
     
     
-    date_format = workbook.add_format({'num_format': 'dd/mm/yyyy hh:mm'})
+    date_format_1 = workbook.add_format({
+        'num_format': 'dd/mm/yyyy hh:mm',
+        "border": 1,
+        "border_color": "#000000",
+        "valign": "vcenter"
+    })
+    
+    date_format_2 = workbook.add_format({
+        'num_format': 'dd/mm/yyyy hh:mm',
+        "border": 1,
+        "border_color": "#000000",
+        "bg_color": "#D3D3D3",
+        "valign": "vcenter"
+    })
+    
     # Registros
-    
-    for fila, tarea in enumerate(tareas, start=1):
-        worksheet.write(fila, 0, fila)
-        worksheet.write(fila, 1, tarea.description)
-        worksheet.write(fila, 2, tarea.tipo.nombre)
-        worksheet.write(fila, 3, tarea.prioridad)
-        worksheet.write(fila, 4, tarea.estado)
-        worksheet.write_datetime(
-        fila,
-        5,
-        tarea.fecha_creacion,
-        date_format
-        )
+    fila = 5
+    for tarea in tareas:
+        argumento = None
+        formato_fech = None
+        if fila % 2 == 0:
+            argumento = cell_format_2
+            formato_fech = date_format_2 
+        else:
+            argumento = cell_format_1
+            formato_fech = date_format_1 
+        
+        worksheet.write(fila, 0, fila-4, argumento)
+        worksheet.write(fila, 1, tarea.description, argumento)
+        worksheet.write(fila, 2, tarea.tipo.nombre, argumento)
+        worksheet.write(fila, 3, tarea.prioridad, argumento)
+        worksheet.write(fila, 4, tarea.estado, argumento)
+        worksheet.write_datetime(fila, 5, tarea.fecha_creacion, formato_fech)
         print("****************tareas*************")
-        print(type(tarea.fecha_creacion))
+        print(tarea.description)
         print("****************tareas*************")
+        fila += 1
     
     worksheet.set_column("A:A", 10)
     worksheet.set_column("B:B", 50)

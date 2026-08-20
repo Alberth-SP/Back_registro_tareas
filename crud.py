@@ -50,7 +50,7 @@ def create_tarea(db: Session, tarea: schemas.TareaBase):
     db.refresh(db_tarea)
     return db_tarea
 
-def get_tareas(db: Session, skip: int=0, limit: int=100):
+def get_tareas(db: Session, skip: int=0, limit: int | None = None):
     tipo_tem = db.query(models.Tarea).options(joinedload(models.Tarea.tipo)).all()
     print(tipo_tem[0].__dict__)
     return (db.query(models.Tarea)
