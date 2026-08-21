@@ -131,7 +131,7 @@ def exportar_excel(db: Session = Depends(get_db)):
     
     title_format = workbook.add_format({
         "bold": True,
-        "font_size": 18,
+        "font_size": 22,
         "font_color": "black",
         "bg_color": "white",
         "align": "center",
@@ -206,4 +206,95 @@ def exportar_excel(db: Session = Depends(get_db)):
     )
     
 
+@app.get("/tareas/prioridad-estado")
+def exportar_excel(db: Session = Depends(get_db)):
+    tareas = crud.get_tareas(db, skip=0, limit = None)
+    prioridad = ["baja","media","alta"]
+    dict_estados = {
+        "pendiente":0, 
+        "en proceso":1, 
+        "finalizado":2
+    }
+    dict_prioridad = {
+        "baja":0,
+        "media":1,
+        "alta":2,
+    }
     
+    matriz_prio_estad = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ]
+    
+    for tarea in tareas:
+        fila = dict_prioridad[tarea.prioridad]
+        columna = dict_estados[tarea.estado]
+        matriz_prio_estad[fila][columna] += 1
+    
+    print(matriz_prio_estad)
+        
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+    worksheet = workbook.add_worksheet("Tareas")
+    
+    header = workbook.add_format({
+        "bold": True,
+        "bg_color": "#4472C4",
+        "font_color": "white",
+        "border": 4,
+        "align": "center",
+        "border_color": "#D9E1F2"
+    })
+    
+    # Celdas normales
+    cell_format_1 = workbook.add_format({
+        "border": 1,
+        "border_color": "#000000",
+        "valign": "vcenter"
+    })
+    
+    title_format = workbook.add_format({
+        "bold": True,
+        "font_size": 22,
+        "font_color": "black",
+        "bg_color": "white",
+        "align": "center",
+        "valign": "vcenter"
+    })
+    
+    # Cabeceras
+    worksheet.merge_range("A3:F3", "REPORTE", title_format)
+    worksheet.write("B6", "PENDIENTE", header)
+    worksheet.write("C6", "EN PROCESO", header)
+    worksheet.write("D6", "FINALIZADO", header) 
+    
+    worksheet.write("A7", "BAJA", header)
+    worksheet.write("A8", "MEDIA", header)
+    worksheet.write("A9", "ALTA", header) 
+
+    # Registros
+    
+    for filas in range(len(matriz_prio_estad)):
+        for columnas in range(len(matriz_prio_estad)):
+            worksheet.write(filas+6, columnas+1, matriz_prio_estad[filas][columnas], cell_format_1)
+        
+    
+ 
+    workbook.close()
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": "attachment; filename=tareas.xlsx"
+        }
+    )
+    
+    
+    
+      
+          
+       
