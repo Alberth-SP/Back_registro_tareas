@@ -59,47 +59,7 @@ def read_tipo(tipo_id: int, tipo: schemas.TipoBase, db:Session=Depends(get_db)):
 
 # Tarea
 
-@app.post("/tarea/", response_model = schemas.Tarea)
-def create_tarea(tarea: schemas.TareaBase, db: Session = Depends(get_db)):
-    return crud.create_tarea(db=db, tarea=tarea)
-
-@app.get("/tarea/", response_model=list[schemas.Tarea])
-def read_tarea(skip: int=0, limit: int | None = None, db: Session= Depends(get_db)):
-    tareas = crud.get_tareas(db, skip=skip, limit=limit)
-    return tareas
-
-@app.get("/tarea/{tarea_id}", response_model=schemas.Tarea)
-def read_tarea(tarea_id: int, db: Session= Depends(get_db)):
-    tarea = crud.get_tarea(db, tarea_id = tarea_id )
-    if tarea is None:
-         raise HTTPException(status_code=404, detail="Tarea not found")
-    return tarea
-
-
-@app.put("/tarea/{tarea_id}", response_model=schemas.Tarea)
-def read_tarea(tarea_id: int, tarea: schemas.TareaBase, db:Session=Depends(get_db)):
-    db_tarea = crud.update_tarea(db, tarea_id = tarea_id, tarea= tarea)
-    if db_tarea is None:
-        raise HTTPException(status_code=404, detail="Tarea not found")
-    return db_tarea
-
-@app.delete("/tarea/{tarea_id}")
-def delete_tarea(tarea_id: int, db:Session=Depends(get_db)):
-    success = crud.delete_tarea(db, tarea_id=tarea_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Tarea not found")
-    return {"detail":"Tarea deleted successfully"}
-
-# Estado
-
-@app.put("/tarea/{tarea_id}/estad")
-def cambiar_estado(tarea_id: int, estado: schemas.EstadoTarea, db:Session=Depends(get_db)):
-    db_tarea = crud.update_estado(db, tarea_id = tarea_id, estado = estado.estado)
-    if db_tarea is None:
-        raise HTTPException(status_code=404, detail="Tarea not found")
-    return db_tarea
-
-@app.get("/exportar-excel")
+@app.get("/tarea/exportar-excel")
 def exportar_excel(db: Session = Depends(get_db)):
     tareas = crud.get_tareas(db, skip=0, limit = None)
     output = BytesIO()
@@ -203,7 +163,7 @@ def exportar_excel(db: Session = Depends(get_db)):
     )
     
 
-@app.get("/tareas/prioridad-estado")
+@app.get("/tarea/prioridad-estado")
 def exportar_excel(db: Session = Depends(get_db)):
     tareas = crud.get_tareas(db, skip=0, limit = None)
     diccionario = {}
@@ -212,10 +172,7 @@ def exportar_excel(db: Session = Depends(get_db)):
     clave = ""
     for tarea in tareas:
         clave = tarea.prioridad + tarea.estado
-        if(a is not diccionario):
-            diccionario[clave] = diccionario.get(clave, 0) + 1
-        else:
-            diccionario[clave] = diccionario.get(clave, 0) + 1
+        diccionario[clave] = diccionario.get(clave, 0) + 1
    
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output, {"in_memory": True})
@@ -292,10 +249,44 @@ def exportar_excel(db: Session = Depends(get_db)):
             "Content-Disposition": "attachment; filename=tareas.xlsx"
         }
     )
-    
-    
-    
-    
-      
-          
-       
+
+
+@app.post("/tarea/", response_model = schemas.Tarea)
+def create_tarea(tarea: schemas.TareaBase, db: Session = Depends(get_db)):
+    return crud.create_tarea(db=db, tarea=tarea)
+
+@app.get("/tarea/", response_model=list[schemas.Tarea])
+def read_tarea(skip: int=0, limit: int | None = None, db: Session= Depends(get_db)):
+    tareas = crud.get_tareas(db, skip=skip, limit=limit)
+    return tareas
+
+@app.get("/tarea/{tarea_id}", response_model=schemas.Tarea)
+def read_tarea(tarea_id: int, db: Session= Depends(get_db)):
+    tarea = crud.get_tarea(db, tarea_id = tarea_id )
+    if tarea is None:
+         raise HTTPException(status_code=404, detail="Tarea not found")
+    return tarea
+
+
+@app.put("/tarea/{tarea_id}", response_model=schemas.Tarea)
+def read_tarea(tarea_id: int, tarea: schemas.TareaBase, db:Session=Depends(get_db)):
+    db_tarea = crud.update_tarea(db, tarea_id = tarea_id, tarea= tarea)
+    if db_tarea is None:
+        raise HTTPException(status_code=404, detail="Tarea not found")
+    return db_tarea
+
+@app.delete("/tarea/{tarea_id}")
+def delete_tarea(tarea_id: int, db:Session=Depends(get_db)):
+    success = crud.delete_tarea(db, tarea_id=tarea_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Tarea not found")
+    return {"detail":"Tarea deleted successfully"}
+
+# Estado
+
+@app.put("/tarea/{tarea_id}/estad")
+def cambiar_estado(tarea_id: int, estado: schemas.EstadoTarea, db:Session=Depends(get_db)):
+    db_tarea = crud.update_estado(db, tarea_id = tarea_id, estado = estado.estado)
+    if db_tarea is None:
+        raise HTTPException(status_code=404, detail="Tarea not found")
+    return db_tarea
