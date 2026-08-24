@@ -181,9 +181,6 @@ def exportar_excel(db: Session = Depends(get_db)):
         worksheet.write(fila, 3, tarea.prioridad, argumento)
         worksheet.write(fila, 4, tarea.estado, argumento)
         worksheet.write_datetime(fila, 5, tarea.fecha_creacion, formato_fech)
-        print("****************tareas*************")
-        print(tarea.description)
-        print("****************tareas*************")
         fila += 1
     
     worksheet.set_column("A:A", 10)
@@ -209,31 +206,17 @@ def exportar_excel(db: Session = Depends(get_db)):
 @app.get("/tareas/prioridad-estado")
 def exportar_excel(db: Session = Depends(get_db)):
     tareas = crud.get_tareas(db, skip=0, limit = None)
-    prioridad = ["baja","media","alta"]
-    dict_estados = {
-        "pendiente":0, 
-        "en proceso":1, 
-        "finalizado":2
-    }
-    dict_prioridad = {
-        "baja":0,
-        "media":1,
-        "alta":2,
-    }
-    
-    matriz_prio_estad = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-    ]
-    
+    diccionario = {}
+    estados = ["pendiente", "en proceso", "finalizado"]
+    prioridad = ["baja", "media", "alta"]
+    clave = ""
     for tarea in tareas:
-        fila = dict_prioridad[tarea.prioridad]
-        columna = dict_estados[tarea.estado]
-        matriz_prio_estad[fila][columna] += 1
-    
-    print(matriz_prio_estad)
-        
+        clave = tarea.prioridad + tarea.estado
+        if(a is not diccionario):
+            diccionario[clave] = diccionario.get(clave, 0) + 1
+        else:
+            diccionario[clave] = diccionario.get(clave, 0) + 1
+   
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet("Tareas")
@@ -268,18 +251,35 @@ def exportar_excel(db: Session = Depends(get_db)):
     worksheet.write("B6", "PENDIENTE", header)
     worksheet.write("C6", "EN PROCESO", header)
     worksheet.write("D6", "FINALIZADO", header) 
+    worksheet.write("E6", "TOTAL", header)
     
     worksheet.write("A7", "BAJA", header)
     worksheet.write("A8", "MEDIA", header)
     worksheet.write("A9", "ALTA", header) 
+    worksheet.write("D10", "TOTALES", header)
 
     # Registros
+    fila = 6
+    columna = 1
+    suma_1 = 0
+    suma_total = 0
+    for p in prioridad:
+        for e in estados:
+            worksheet.write(fila, columna, diccionario[p+e], cell_format_1)
+            suma_1 += diccionario[p+e]
+            columna += 1
+        worksheet.write(fila, len(prioridad) + 1, suma_1, cell_format_1)
+        suma_total += suma_1
+        suma_1 = 0
+        columna = 1  
+        fila += 1
+    worksheet.write(len(estados) + 6, len(prioridad) + 1, suma_total, cell_format_1)
     
-    for filas in range(len(matriz_prio_estad)):
-        for columnas in range(len(matriz_prio_estad)):
-            worksheet.write(filas+6, columnas+1, matriz_prio_estad[filas][columnas], cell_format_1)
-        
-    
+
+    worksheet.set_column("A:A", 20)
+    worksheet.set_column("B:B", 20)
+    worksheet.set_column("C:C", 20)
+    worksheet.set_column("D:D", 20)
  
     workbook.close()
 
@@ -292,6 +292,7 @@ def exportar_excel(db: Session = Depends(get_db)):
             "Content-Disposition": "attachment; filename=tareas.xlsx"
         }
     )
+    
     
     
     
